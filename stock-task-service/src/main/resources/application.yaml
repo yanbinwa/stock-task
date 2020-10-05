@@ -1,0 +1,10 @@
+server:
+  port: ${STS_PORT:1700}
+
+spring:
+  profiles:
+    active: utils, stock-task-utils
+
+executor:
+  maxThreadNum: 20
+  debug: ${EXECUTOR_DEBUG:true}

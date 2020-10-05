@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.yanbin.stock</groupId>
+    <artifactId>stock-task</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>stock-task</name>
+    <description>Demo project for Spring Boot</description>
+
+    <repositories>
+        <repository>
+            <id>EmotibotRepo</id>
+            <url>http://docker-reg.emotibot.com.cn:8081/artifactory/libs-snapshot-local</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>EmotibotRepo</id>
+            <name>dfb384e4182c-snapshots</name>
+            <url>http://docker-reg.emotibot.com.cn:8081/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <modules>
+        <module>stock-task-service</module>
+        <module>stock-task-utils</module>
+    </modules>
+
+</project>
