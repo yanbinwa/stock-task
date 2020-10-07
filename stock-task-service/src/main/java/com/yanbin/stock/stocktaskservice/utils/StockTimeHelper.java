@@ -28,7 +28,7 @@ public class StockTimeHelper {
 
     private static final String HOLIDAY_URL = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?query=%d&resource_id=6018";
     private static final DateTimeFormatter HOLIDAY_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("hh点mm分");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH点mm分");
     private static final List<Integer> HOLIDAY_YEARS = Arrays.asList(2020);
 
     @Autowired
@@ -38,7 +38,7 @@ public class StockTimeHelper {
 
     @PostConstruct
     private void init() throws StockTaskException {
-        //fetchHoliday();
+        fetchHoliday();
     }
 
     /**
@@ -57,8 +57,8 @@ public class StockTimeHelper {
         int step = 0;
         DateTime ret = new DateTime(dateTime);
         while (step < offset) {
-            ret.plusDays(1);
-            if (isOpeningDate(ret)) {
+            ret = ret.plusDays(1);
+            if (!isOpeningDate(ret)) {
                 continue;
             }
             step ++;
@@ -99,7 +99,7 @@ public class StockTimeHelper {
                 JSONObject holidayObj = array.getJSONObject(i);
                 IntStream.range(0, holidayObj.getJSONArray("list").size())
                         .mapToObj(t -> holidayObj.getJSONArray("list").getJSONObject(t))
-                        .forEach(t -> set.add(t.getString("date")));
+                        .forEach(t -> set.add(HOLIDAY_FORMATTER.parseDateTime(t.getString("date")).toString(HOLIDAY_FORMATTER)));
             }
         }
         holidays = set;

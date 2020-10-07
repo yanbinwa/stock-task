@@ -49,7 +49,9 @@ public class StockDataHelper {
     // 问财股票信息KEY
     private static final String WEN_CAI_STOCK_CODE_KEY = "code";
 
-    private static final DateTimeFormatter STOCK_TIME_FORMATTER = DateTimeFormat.forPattern("hh:mm:ss");
+    private static final DateTimeFormatter STOCK_TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss");
+
+    private static final DateTimeFormatter STOCK_TS_TIME_FORMATTER = DateTimeFormat.forPattern("HHmm");
 
     @Autowired
     HttpHelper httpHelper;
@@ -129,9 +131,8 @@ public class StockDataHelper {
     public Stock fetchStockByTime(String code, DateTime dateTime) {
         // 日期搜索条件
         DateTime date = new DateTime(dateTime);
-        date = date.withHourOfDay(11).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
-        Timestamp timestamp = new Timestamp(date.getMillis());
-        StockTsEntity stockTsEntity = stockTsDao.findFirstByCodeAndTime(code, timestamp);
+        date = date.withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+        StockTsEntity stockTsEntity = stockTsDao.findOneByCodeAndTime(code, new Timestamp(date.getMillis()));
         if (stockTsEntity == null) {
             return null;
         }
@@ -145,7 +146,7 @@ public class StockDataHelper {
         }
         StockTs stockTs = JsonUtils.getObjectFromStr(stockTsStr, StockTs.class);
         StockTs.StockTsElement stockTsElement =
-                stockTs.getElements().stream().filter(t -> t.getTime().equals(dateTime.toString(STOCK_TIME_FORMATTER)))
+                stockTs.getElements().stream().filter(t -> t.getTime().equals(dateTime.toString(STOCK_TS_TIME_FORMATTER)))
                         .findFirst().orElse(null);
         if (stockTsElement == null) {
             return null;

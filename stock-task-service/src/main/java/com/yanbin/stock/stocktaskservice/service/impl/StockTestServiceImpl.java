@@ -1,5 +1,7 @@
 package com.yanbin.stock.stocktaskservice.service.impl;
 
+import com.emotibot.gemini.geminiutils.pojo.http.HttpFileElement;
+import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.emotibot.gemini.geminiutils.utils.FileUtils;
 import com.emotibot.gemini.geminiutils.utils.UuidUtils;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
@@ -18,6 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +36,8 @@ import java.util.stream.Collectors;
 public class StockTestServiceImpl implements StockTestService {
 
     private static final DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyy年MM月dd日");
-    private static final List<String> TEST_HEADER = Arrays.asList("股票代码", "买入时间", "买入价格", "卖出时间", "卖出价格");
+    private static final DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("yyyy年MM月dd日 HH:mm:ss");
+    private static final List<String> TEST_HEADER = Arrays.asList("股票代码", "买入时间", "买入价格", "卖出时间", "卖出价格", "收益");
     private static final String STOCK_TEST_DIR = "/stockTest";
 
     @Autowired
@@ -37,6 +45,15 @@ public class StockTestServiceImpl implements StockTestService {
 
     @Autowired
     StockTimeHelper stockTimeHelper;
+
+    @PostConstruct
+    private void init() {
+        File file = new File(buildStockTaskTmpDir());
+        if (file.exists()) {
+            return;
+        }
+        file.mkdir();
+    }
 
     /**
      * 1. 按照startTime和endTime来分时间，按照每一天执行，需要判断节假日和周末
@@ -47,7 +64,7 @@ public class StockTestServiceImpl implements StockTestService {
      * @return
      */
     @Override
-    public void regressionTest(StockTestRequest stockTestRequest) throws StockTaskException {
+    public HttpFileStream regressionTest(StockTestRequest stockTestRequest) throws StockTaskException, FileNotFoundException {
         DateTime startDateTime = dateFormatter.parseDateTime(stockTestRequest.getStartTime());
         DateTime endDateTime = dateFormatter.parseDateTime(stockTestRequest.getEndTime());
         if (startDateTime == null || endDateTime == null) {
@@ -71,14 +88,25 @@ public class StockTestServiceImpl implements StockTestService {
         Map<String, List<List<String>>> sheetNameToContentMap = new HashMap<>();
         for (DateTime dateTime : dateTimes) {
             List<StockTestResult> stockTestResults = stockTestRequestMap.get(dateTime);
-            List<List<String>> content = stockTestResults.stream().sorted(Comparator.comparing(StockTestResult::getIncome))
-                    .map(t -> Arrays.asList(t.getCode(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(), String.valueOf(t.getSalePrice())))
-                    .collect(Collectors.toList());
-            content.add(Arrays.asList(String.valueOf(stockTestResults.stream().mapToDouble(StockTestResult::getIncome).sum() / stockTestResults.size())));
+            if (CollectionUtils.isEmpty(stockTestResults)) {
+                continue;
+            }
+            List<List<String>> content = new ArrayList<>();
+            content.add(TEST_HEADER);
+            content.addAll(stockTestResults.stream().sorted(Comparator.comparing(StockTestResult::getIncome))
+                    .map(t -> Arrays.asList(t.getCode(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(),
+                            String.valueOf(t.getSalePrice()), String.valueOf(t.getIncome())))
+                    .collect(Collectors.toList()));
+            content.add(Arrays.asList("合计", String.valueOf(stockTestResults.stream().mapToDouble(StockTestResult::getIncome).sum() / stockTestResults.size())));
             sheetNameToContentMap.put(dateTime.toString(dateFormatter), content);
         }
         String filePath = buildStockTaskTmpFile();
         FileUtils.writeLogForXls(filePath, sheetNameToContentMap, sheetNames);
+        File file = new File(filePath);
+        InputStream inputStream = new FileInputStream(file);
+        file.delete();
+        return HttpFileStream.builder().inputStream(inputStream).httpFileElement(HttpFileElement.builder()
+                .name(file.getName()).build()).build();
     }
 
     /**
@@ -128,15 +156,19 @@ public class StockTestServiceImpl implements StockTestService {
         if (buyStock == null || saleStock == null) {
             return null;
         }
-        stockTestResult.setBuyTime(buyDateTime.toString(dateFormatter));
+        stockTestResult.setBuyTime(buyDateTime.toString(timeFormatter));
         stockTestResult.setBuyPrice(buyStock.getPrice());
-        stockTestResult.setSaleTime(saleDateTime.toString(dateFormatter));
+        stockTestResult.setSaleTime(saleDateTime.toString(timeFormatter));
         stockTestResult.setSalePrice(saleStock.getPrice());
-        stockTestResult.setIncome((stockTestResult.getSalePrice() - stockTestResult.getSalePrice()) / stockTestResult.getBuyPrice());
+        stockTestResult.setIncome((stockTestResult.getSalePrice() - stockTestResult.getBuyPrice()) / stockTestResult.getBuyPrice());
         return stockTestResult;
     }
 
     private String buildStockTaskTmpFile() {
-        return FileUtils.getTmpDir() + STOCK_TEST_DIR + "/" + UuidUtils.buildUuid() + ".xlsx";
+        return buildStockTaskTmpDir() + "/" + UuidUtils.buildUuid() + ".xlsx";
+    }
+
+    private String buildStockTaskTmpDir() {
+        return FileUtils.getTmpDir() + STOCK_TEST_DIR;
     }
 }

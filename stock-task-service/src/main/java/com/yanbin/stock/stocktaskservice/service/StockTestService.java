@@ -1,7 +1,10 @@
 package com.yanbin.stock.stocktaskservice.service;
 
+import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
+
+import java.io.FileNotFoundException;
 
 /**
  * @author yanbinwang@emotibot.com
@@ -10,5 +13,5 @@ import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
  * 输入一个请求，返回一个excel
  */
 public interface StockTestService {
-    void regressionTest(StockTestRequest stockTestRequest) throws StockTaskException;
+    HttpFileStream regressionTest(StockTestRequest stockTestRequest) throws StockTaskException, FileNotFoundException;
 }

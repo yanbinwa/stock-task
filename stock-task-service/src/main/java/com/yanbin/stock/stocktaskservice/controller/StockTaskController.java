@@ -1,5 +1,7 @@
 package com.yanbin.stock.stocktaskservice.controller;
 
+import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
+import com.emotibot.gemini.geminiutils.utils.HttpFileHelper;
 import com.yanbin.stock.stocktaskservice.service.StockJobManagerService;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
@@ -7,6 +9,9 @@ import com.yanbin.stock.stocktaskutils.pojo.StockJob;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @author yanbinwang@emotibot.com
@@ -21,6 +26,9 @@ public class StockTaskController {
 
     @Autowired
     private StockTestService stockTestService;
+
+    @Autowired
+    private HttpFileHelper httpFileHelper;
 
     @PostMapping("/job")
     public StockJob addStockJob(@RequestHeader("appid") String appid, @RequestBody StockJob stockJob) {
@@ -44,7 +52,12 @@ public class StockTaskController {
     }
 
     @PostMapping("/regressionTest")
-    public void regressionTest(@RequestBody StockTestRequest stockTestRequest) throws StockTaskException {
-        stockTestService.regressionTest(stockTestRequest);
+    public void regressionTest(@RequestBody StockTestRequest stockTestRequest,
+                               HttpServletResponse httpServletResponse) throws StockTaskException, IOException {
+        HttpFileStream httpFileStream = stockTestService.regressionTest(stockTestRequest);
+        if (httpFileStream == null) {
+            return;
+        }
+        httpFileHelper.addFileToResponse(httpFileStream, httpServletResponse);
     }
 }
