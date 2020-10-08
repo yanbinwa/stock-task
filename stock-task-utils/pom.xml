@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>com.emotibot.gemini</groupId>
 			<artifactId>gemini-utils</artifactId>
-			<version>0.0.50-SNAPSHOT</version>
+			<version>0.0.51-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

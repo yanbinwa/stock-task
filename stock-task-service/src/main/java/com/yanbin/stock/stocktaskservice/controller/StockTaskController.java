@@ -51,6 +51,7 @@ public class StockTaskController {
         stockJobManagerService.runStockJob(appid, id);
     }
 
+    @CrossOrigin
     @PostMapping("/regressionTest")
     public void regressionTest(@RequestBody StockTestRequest stockTestRequest,
                                HttpServletResponse httpServletResponse) throws StockTaskException, IOException {
