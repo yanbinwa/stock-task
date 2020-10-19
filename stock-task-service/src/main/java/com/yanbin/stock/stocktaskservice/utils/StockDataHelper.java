@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.emotibot.gemini.geminiutils.utils.HttpHelper;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
 import com.emotibot.gemini.geminiutils.utils.MinioHelper;
+import com.yanbin.stock.stocktaskservice.dao.data.StockDao;
 import com.yanbin.stock.stocktaskservice.dao.data.StockTsDao;
 import com.yanbin.stock.stocktaskservice.entity.data.StockTsEntity;
 import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -49,6 +51,8 @@ public class StockDataHelper {
     // 问财股票信息KEY
     private static final String WEN_CAI_STOCK_CODE_KEY = "code";
 
+    private static final String WEN_CAI_STOCK_NAME_KEY = "股票简称";
+
     private static final DateTimeFormatter STOCK_TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss");
 
     private static final DateTimeFormatter STOCK_TS_TIME_FORMATTER = DateTimeFormat.forPattern("HHmm");
@@ -58,6 +62,9 @@ public class StockDataHelper {
 
     @Autowired
     StockTsDao stockTsDao;
+
+    @Autowired
+    StockDao stockDao;
 
     @Autowired
     MinioHelper minioHelper;
@@ -72,6 +79,8 @@ public class StockDataHelper {
 
         Map<String, Object> formMap = new HashMap<>();
         formMap.put("question", query);
+        formMap.put("page", 1);
+        formMap.put("perpage", 20);
 
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
@@ -88,7 +97,8 @@ public class StockDataHelper {
                     .getJSONArray("txt").getJSONObject(0).getJSONObject("content").getJSONArray("components")
                     .getJSONObject(0).getJSONObject("data").getJSONArray("datas");
             IntStream.range(0, dataObj.size()).forEach(t ->
-                    stocks.add(Stock.builder().code(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_CODE_KEY)).build()));
+                    stocks.add(Stock.builder().code(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_CODE_KEY))
+                            .name(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_NAME_KEY)).build()));
             return stocks;
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,27 +107,29 @@ public class StockDataHelper {
         }
     }
 
-    public List<String> fetchStockByWenCai(List<String> queries) {
-        List<String> chosenStockCode = new ArrayList<>();
+    public List<Stock> fetchStockByWenCai(List<String> queries) {
+        List<Stock> chosenStock = new ArrayList<>();
         for (String query : queries) {
             List<Stock> stocks = fetchStockByWenCai(query);
             // 一旦没有选出的股票
             if (CollectionUtils.isEmpty(stocks)) {
                 return null;
             } else {
-                List<String> codes = stocks.stream().map(Stock::getCode).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(chosenStockCode)) {
-                    chosenStockCode.addAll(codes);
+                if (CollectionUtils.isEmpty(chosenStock)) {
+                    chosenStock.addAll(stocks);
                 } else {
-                    // 需要对于chosenStock和stocks取交集
-                    chosenStockCode.retainAll(codes);
+                    // 需要对于chosenStock和stocks取交集，遍历chosenStock，如果没有
+                    Map<String, Stock> codeToStockMap = chosenStock.stream().collect(Collectors.toMap(Stock::getName,
+                            Function.identity()));
+                    chosenStock = stocks.stream().filter(t -> codeToStockMap.containsKey(t.getCode()))
+                            .collect(Collectors.toList());
                 }
             }
-            if (CollectionUtils.isEmpty(chosenStockCode)) {
+            if (CollectionUtils.isEmpty(chosenStock)) {
                 return null;
             }
         }
-        return chosenStockCode;
+        return chosenStock;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.yanbin.stock.stocktaskservice.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileElement;
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.emotibot.gemini.geminiutils.utils.FileUtils;
@@ -37,7 +38,7 @@ public class StockTestServiceImpl implements StockTestService {
 
     private static final DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("yyyy年MM月dd日");
     private static final DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("yyyy年MM月dd日 HH:mm:ss");
-    private static final List<String> TEST_HEADER = Arrays.asList("股票代码", "买入时间", "买入价格", "卖出时间", "卖出价格", "收益");
+    private static final List<String> TEST_HEADER = Arrays.asList("股票代码", "股票名称", "买入时间", "买入价格", "卖出时间", "卖出价格", "收益");
     private static final String STOCK_TEST_DIR = "/stockTest";
 
     @Autowired
@@ -94,7 +95,7 @@ public class StockTestServiceImpl implements StockTestService {
             List<List<String>> content = new ArrayList<>();
             content.add(TEST_HEADER);
             content.addAll(stockTestResults.stream().sorted(Comparator.comparing(StockTestResult::getIncome))
-                    .map(t -> Arrays.asList(t.getCode(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(),
+                    .map(t -> Arrays.asList(t.getCode(), t.getName(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(),
                             String.valueOf(t.getSalePrice()), String.valueOf(t.getIncome())))
                     .collect(Collectors.toList()));
             content.add(Arrays.asList("合计", String.valueOf(stockTestResults.stream().mapToDouble(StockTestResult::getIncome).sum() / stockTestResults.size())));
@@ -109,6 +110,11 @@ public class StockTestServiceImpl implements StockTestService {
                 .name(file.getName()).build()).build();
     }
 
+    @Override
+    public List<Stock> wenCaiTest(String query) {
+        return stockDataHelper.fetchStockByWenCai(query);
+    }
+
     /**
      * 1. 获取stock列表
      * 2. 计算出买入的时间点
@@ -121,16 +127,16 @@ public class StockTestServiceImpl implements StockTestService {
      * @return
      */
     private List<StockTestResult> calculateStockTestResult(DateTime dateTime, StockTestRequest stockTestRequest) {
-        List<String> chooseStockCodes = queryStock(dateTime, stockTestRequest);
-        if (CollectionUtils.isEmpty(chooseStockCodes)) {
+        List<Stock> chooseStocks = queryStock(dateTime, stockTestRequest);
+        if (CollectionUtils.isEmpty(chooseStocks)) {
             return null;
         }
         // 每只股票进行计算
-        return chooseStockCodes.stream().map(t -> calculateStockTestResult(t, dateTime, stockTestRequest))
+        return chooseStocks.stream().map(t -> calculateStockTestResult(t, dateTime, stockTestRequest))
                 .filter(t -> t != null).collect(Collectors.toList());
     }
 
-    private List<String> queryStock(DateTime dateTime, StockTestRequest stockTestRequest) {
+    private List<Stock> queryStock(DateTime dateTime, StockTestRequest stockTestRequest) {
         List<String> queries = new ArrayList<>();
         for (String time : stockTestRequest.getQueryTimes()) {
             queries.add(stockTestRequest.getQueryTemplate().replace(StockTaskConstants.QUERY_PLACE_HOLDER,
@@ -139,20 +145,15 @@ public class StockTestServiceImpl implements StockTestService {
         return stockDataHelper.fetchStockByWenCai(queries);
     }
 
-    /**
-     *
-     * @param code
-     * @param stockTestRequest
-     * @return
-     */
-    private StockTestResult calculateStockTestResult(String code, DateTime dateTime, StockTestRequest stockTestRequest) {
+    private StockTestResult calculateStockTestResult(Stock stock, DateTime dateTime, StockTestRequest stockTestRequest) {
         StockTestResult stockTestResult = new StockTestResult();
         stockTestResult.setDate(dateTime.toString(dateFormatter));
-        stockTestResult.setCode(code);
+        stockTestResult.setCode(stock.getCode());
+        stockTestResult.setName(stock.getName());
         DateTime buyDateTime = stockTimeHelper.buildDateTime(dateTime, stockTestRequest.getBuyRule());
-        Stock buyStock = stockDataHelper.fetchStockByTime(code, buyDateTime);
+        Stock buyStock = stockDataHelper.fetchStockByTime(stock.getCode(), buyDateTime);
         DateTime saleDateTime = stockTimeHelper.buildDateTime(dateTime, stockTestRequest.getSaleRule());
-        Stock saleStock = stockDataHelper.fetchStockByTime(code, saleDateTime);
+        Stock saleStock = stockDataHelper.fetchStockByTime(stock.getCode(), saleDateTime);
         if (buyStock == null || saleStock == null) {
             return null;
         }

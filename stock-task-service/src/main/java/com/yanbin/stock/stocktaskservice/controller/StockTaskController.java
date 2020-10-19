@@ -6,12 +6,15 @@ import com.yanbin.stock.stocktaskservice.service.StockJobManagerService;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
 import com.yanbin.stock.stocktaskutils.pojo.StockJob;
+import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockWenCaiRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yanbinwang@emotibot.com
@@ -60,5 +63,10 @@ public class StockTaskController {
             return;
         }
         httpFileHelper.addFileToResponse(httpFileStream, httpServletResponse);
+    }
+
+    @PostMapping("/wenCai")
+    public List<Stock> wenCai(@RequestBody StockWenCaiRequest request) {
+        return stockTestService.wenCaiTest(request.getQuery());
     }
 }

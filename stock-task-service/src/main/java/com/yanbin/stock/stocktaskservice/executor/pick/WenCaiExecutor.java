@@ -8,6 +8,7 @@ import com.yanbin.stock.stocktaskutils.action.pick.WenCaiAction;
 import com.yanbin.stock.stocktaskutils.constants.StockActionType;
 import com.yanbin.stock.stocktaskutils.pojo.StockActionContext;
 import com.yanbin.stock.stocktaskutils.pojo.StockActionExecuteMsg;
+import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -51,7 +52,7 @@ public class WenCaiExecutor extends BaseStockExecutor {
         }
         StockActionContext stockActionContext = stockActionExecuteMsg.getContext();
         String dateStr = getDateStr(stockActionContext);
-        List<String> stockCodes = chooseStock(dateStr, wenCaiAction, stockActionContext);
+        List<Stock> stockCodes = chooseStock(dateStr, wenCaiAction, stockActionContext);
         if (CollectionUtils.isEmpty(stockCodes)) {
             return true;
         }
@@ -71,7 +72,7 @@ public class WenCaiExecutor extends BaseStockExecutor {
     }
 
     // 需要将筛选的条件写入到StockActionContext中
-    private List<String> chooseStock(String dataStr, WenCaiAction wenCaiAction, StockActionContext stockActionContext) {
+    private List<Stock> chooseStock(String dataStr, WenCaiAction wenCaiAction, StockActionContext stockActionContext) {
         List<String> queries = new ArrayList<>();
         for (String time : wenCaiAction.getTimes()) {
             queries.add(String.format(wenCaiAction.getTemplate(), StringUtils.isEmpty(dataStr) ? time : dataStr + time));
@@ -83,12 +84,12 @@ public class WenCaiExecutor extends BaseStockExecutor {
      * 1. 确定执行购买的时间节点，需要考虑节假日的
      * 2.
      *
-     * @param code
+     * @param stock
      * @param wenCaiAction
      * @param stockActionExecuteMsg
      * @return
      */
-    private StockActionExecuteMsg buildBuyAction(String code, WenCaiAction wenCaiAction, StockActionExecuteMsg stockActionExecuteMsg) {
+    private StockActionExecuteMsg buildBuyAction(Stock stock, WenCaiAction wenCaiAction, StockActionExecuteMsg stockActionExecuteMsg) {
         return null;
     }
 }
