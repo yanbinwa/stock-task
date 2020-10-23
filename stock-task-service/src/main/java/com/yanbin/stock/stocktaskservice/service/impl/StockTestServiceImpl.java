@@ -71,27 +71,33 @@ public class StockTestServiceImpl implements StockTestService {
             throw new StockTaskException(StockTaskResponseInfo.STOCK_TASK_JOB_NOT_EXIST);
         }
         Map<DateTime, List<StockTestResult>> stockTestRequestMap = new HashMap<>();
+        List<DateTime> dateTimes = new ArrayList<>();
         // 获取
         for (int i = 0; i <= endDateTime.getDayOfYear() - startDateTime.getDayOfYear(); i ++) {
             DateTime dateTime = startDateTime.plusDays(i);
             if (!stockTimeHelper.isOpeningDate(dateTime)) {
                 continue;
             }
+            dateTimes.add(dateTime);
             List<StockTestResult> stockTestResults = calculateStockTestResult(dateTime, stockTestRequest);
             if (!CollectionUtils.isEmpty(stockTestResults)) {
                 stockTestRequestMap.put(dateTime, stockTestResults);
             }
         }
+
         // 输出成excel，返回InputStream 或其他
-        List<DateTime> dateTimes = stockTestRequestMap.keySet().stream().sorted().collect(Collectors.toList());
         List<String> sheetNames = dateTimes.stream().map(t -> t.toString(dateFormatter)).collect(Collectors.toList());
         Map<String, List<List<String>>> sheetNameToContentMap = new HashMap<>();
         for (DateTime dateTime : dateTimes) {
             List<StockTestResult> stockTestResults = stockTestRequestMap.get(dateTime);
+            List<List<String>> content = new ArrayList<>();
+            content.add(TEST_HEADER);
             if (CollectionUtils.isEmpty(stockTestResults)) {
+                // 如果stockTestRequestMap结果为空，需要确保文件是正常的
+                content.add(Arrays.asList("合计", "0"));
+                sheetNameToContentMap.put(dateTime.toString(dateFormatter), content);
                 continue;
             }
-            List<List<String>> content = new ArrayList<>();
             content.add(TEST_HEADER);
             content.addAll(stockTestResults.stream().sorted(Comparator.comparing(StockTestResult::getIncome))
                     .map(t -> Arrays.asList(t.getCode(), t.getName(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(),
