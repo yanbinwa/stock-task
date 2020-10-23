@@ -14,5 +14,9 @@ public class StockTaskConstants {
 
     public static final String SPIDER_BUCKET = "spider";
 
-    public static final String QUERY_PLACE_HOLDER = "${query}";
+    public static final String DATE_PLACE_HOLDER = "${date}";
+
+    public static final String TIME_PLACE_HOLDER = "${time}";
+
+    public static final String LAST_DATE_PLACE_HOLDER = "${lastDate}";
 }

@@ -18,6 +18,9 @@ public class StockTestRequest {
 
     private String queryTemplate;
 
+    /**
+     * 回测执行的时间，可以有多组
+     */
     private List<String> queryTimes;
 
     // 回测开始时间

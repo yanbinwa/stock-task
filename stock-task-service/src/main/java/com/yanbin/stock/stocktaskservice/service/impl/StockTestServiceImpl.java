@@ -1,6 +1,5 @@
 package com.yanbin.stock.stocktaskservice.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileElement;
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.emotibot.gemini.geminiutils.utils.FileUtils;
@@ -136,11 +135,25 @@ public class StockTestServiceImpl implements StockTestService {
                 .filter(t -> t != null).collect(Collectors.toList());
     }
 
+    /**
+     * 获取特定时间的股票收益
+     *
+     * @param dateTime
+     * @param stockTestRequest
+     * @return
+     */
     private List<Stock> queryStock(DateTime dateTime, StockTestRequest stockTestRequest) {
+        if (dateTime == null) {
+            // 按照当天的时间
+            dateTime = new DateTime();
+        }
         List<String> queries = new ArrayList<>();
         for (String time : stockTestRequest.getQueryTimes()) {
-            queries.add(stockTestRequest.getQueryTemplate().replace(StockTaskConstants.QUERY_PLACE_HOLDER,
-                    dateTime == null ? time : dateTime.toString(dateFormatter) + time));
+            String query = stockTestRequest.getQueryTemplate();
+            query = query.replace(StockTaskConstants.DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(dateTime));
+            query = query.replace(StockTaskConstants.TIME_PLACE_HOLDER, time);
+            query = query.replace(StockTaskConstants.LAST_DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(stockTimeHelper.buildLastDealDay(dateTime, 1)));
+            queries.add(query);
         }
         return stockDataHelper.fetchStockByWenCai(queries);
     }

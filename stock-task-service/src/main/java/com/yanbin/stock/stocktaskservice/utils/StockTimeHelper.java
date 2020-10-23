@@ -29,6 +29,7 @@ public class StockTimeHelper {
     private static final String HOLIDAY_URL = "https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?query=%d&resource_id=6018";
     private static final DateTimeFormatter HOLIDAY_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern("HH点mm分");
+    private static final DateTimeFormatter DAY_FORMATTER = DateTimeFormat.forPattern("yyyy年MM月dd日");
     private static final List<Integer> HOLIDAY_YEARS = Arrays.asList(2020);
 
     @Autowired
@@ -84,6 +85,27 @@ public class StockTimeHelper {
             return false;
         }
         return true;
+    }
+
+    public DateTime buildLastDealDay(DateTime dateTime, Integer offset) {
+        int step = 0;
+        DateTime ret = new DateTime(dateTime);
+        while (step < offset) {
+            ret = ret.minusDays(1);
+            if (!isOpeningDate(ret)) {
+                continue;
+            }
+            step ++;
+        }
+        return ret.withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+    }
+
+    public String buildDayStr(DateTime dateTime) {
+        return dateTime.toString(DAY_FORMATTER);
+    }
+
+    public String buildTimeStr(DateTime dateTime) {
+        return dateTime.toString(TIME_FORMATTER);
     }
 
     private void fetchHoliday() throws StockTaskException {
