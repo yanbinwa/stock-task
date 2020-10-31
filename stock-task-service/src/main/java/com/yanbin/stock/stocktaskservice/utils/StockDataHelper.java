@@ -2,13 +2,17 @@ package com.yanbin.stock.stocktaskservice.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.emotibot.gemini.geminiutils.pojo.response.ArrayResponse;
 import com.emotibot.gemini.geminiutils.utils.HttpHelper;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
 import com.emotibot.gemini.geminiutils.utils.MinioHelper;
 import com.yanbin.stock.stocktaskservice.dao.data.StockDao;
+import com.yanbin.stock.stocktaskservice.dao.data.StockToIndustryDao;
 import com.yanbin.stock.stocktaskservice.dao.data.StockTsDao;
+import com.yanbin.stock.stocktaskservice.entity.data.StockToIndustryEntity;
 import com.yanbin.stock.stocktaskservice.entity.data.StockTsEntity;
 import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
+import com.yanbin.stock.stocktaskutils.pojo.data.Industry;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.data.StockTs;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +21,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -47,15 +52,21 @@ public class StockDataHelper {
     // 问财
     private static final String WEN_CAI_URL = "http://www.iwencai.com/unifiedwap/unified-wap/v2/result/get-robot-data?source=Ths_iwencai_Xuangu&version=2.0";
     private static final String WEN_CAI_ADD_INFO = "{\"urp\":{\"scene\":1,\"company\":1,\"business\":8},\"contentType\":\"json\"}";
+    private static final String SPIDER_INDUSTRY_TOP_URL = "/gemini/spider/data/industry/top";
 
     // 问财股票信息KEY
     private static final String WEN_CAI_STOCK_CODE_KEY = "code";
-
     private static final String WEN_CAI_STOCK_NAME_KEY = "股票简称";
+    // 及时信息
+    private static final String WEN_CAI_STOCK_CURRENT_PRICE_KEY = "最新价";
+    private static final String WEN_CAI_STOCK_CURRENT_GROUP_RATE_KEY = "最新涨跌幅";
 
     private static final DateTimeFormatter STOCK_TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss");
 
     private static final DateTimeFormatter STOCK_TS_TIME_FORMATTER = DateTimeFormat.forPattern("HHmm");
+
+    @Value("${spider.url}")
+    String spiderUrl;
 
     @Autowired
     HttpHelper httpHelper;
@@ -65,6 +76,9 @@ public class StockDataHelper {
 
     @Autowired
     StockDao stockDao;
+
+    @Autowired
+    StockToIndustryDao stockToIndustryDao;
 
     @Autowired
     MinioHelper minioHelper;
@@ -98,7 +112,9 @@ public class StockDataHelper {
                     .getJSONObject(0).getJSONObject("data").getJSONArray("datas");
             IntStream.range(0, dataObj.size()).forEach(t ->
                     stocks.add(Stock.builder().code(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_CODE_KEY))
-                            .name(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_NAME_KEY)).build()));
+                            .name(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_NAME_KEY))
+                            .price(dataObj.getJSONObject(t).getDouble(WEN_CAI_STOCK_CURRENT_PRICE_KEY))
+                            .growthRate(dataObj.getJSONObject(t).getDouble(WEN_CAI_STOCK_CURRENT_GROUP_RATE_KEY)).build()));
             return stocks;
         } catch (Exception e) {
             e.printStackTrace();
@@ -165,4 +181,25 @@ public class StockDataHelper {
         }
         return Stock.builder().code(code).price(stockTsElement.getPrice()).build();
     }
+
+    // 调用爬虫服务，获取结果
+    public List<Industry> fetchTopIndustry(Integer size) {
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("size", size);
+        ArrayResponse response = httpHelper.get(spiderUrl + SPIDER_INDUSTRY_TOP_URL, null, paramMap, ArrayResponse.class);
+        if (response == null || !response.success()) {
+            return null;
+        }
+        return httpHelper.buildResponseDataList(response, Industry.class);
+    }
+
+    public Map<String, List<String>> getStockToIndustryMap() {
+        List<StockToIndustryEntity> stockToIndustryEntities = stockToIndustryDao.findAll();
+        if (CollectionUtils.isEmpty(stockToIndustryEntities)) {
+            return null;
+        }
+        return stockToIndustryEntities.stream().collect(Collectors.groupingBy(StockToIndustryEntity::getStockCode,
+                Collectors.mapping(StockToIndustryEntity::getIndustryName, Collectors.toList())));
+    }
+
 }

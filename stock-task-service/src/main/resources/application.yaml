@@ -8,3 +8,6 @@ spring:
 executor:
   maxThreadNum: 20
   debug: ${EXECUTOR_DEBUG:true}
+
+spider:
+  url: ${SPIDER_URL:http://localhost:1618}

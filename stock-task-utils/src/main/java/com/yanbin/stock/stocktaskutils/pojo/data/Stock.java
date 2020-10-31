@@ -1,15 +1,15 @@
 package com.yanbin.stock.stocktaskutils.pojo.data;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
  * @author yanbinwang@emotibot.com
  * @date 2020/9/24 上午8:07
  */
-@Builder
+@SuperBuilder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

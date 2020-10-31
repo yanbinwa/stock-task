@@ -4,24 +4,17 @@ import com.yanbin.stock.stocktaskutils.pojo.deal.DealRule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import lombok.experimental.SuperBuilder;
 
 /**
  * @author yanbinwang@emotibot.com
  * @date 2020/10/3 下午5:58
  */
+@SuperBuilder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class StockTestRequest {
-
-    private String queryTemplate;
-
-    /**
-     * 回测执行的时间，可以有多组
-     */
-    private List<String> queryTimes;
+public class StockTestRequest extends StockQueryRequest {
 
     // 回测开始时间
     private String startTime;

@@ -7,6 +7,7 @@ import com.yanbin.stock.stocktaskservice.service.StockTestService;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
 import com.yanbin.stock.stocktaskutils.pojo.StockJob;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockWenCaiRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,5 +69,16 @@ public class StockTaskController {
     @PostMapping("/wenCai")
     public List<Stock> wenCai(@RequestBody StockWenCaiRequest request) {
         return stockTestService.wenCaiTest(request.getQuery());
+    }
+
+    @CrossOrigin
+    @PostMapping("/stockQuery")
+    public void stockIndustryQuery(@RequestBody StockIndustryRequest stockIndustryRequest,
+                                   HttpServletResponse httpServletResponse) throws IOException {
+        HttpFileStream httpFileStream = stockTestService.stockIndustryQuery(stockIndustryRequest);
+        if (httpFileStream == null) {
+            return;
+        }
+        httpFileHelper.addFileToResponse(httpFileStream, httpServletResponse);
     }
 }
