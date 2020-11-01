@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Date;
+
 /**
  * @author yanbinwang@emotibot.com
  * @date 2020/10/3 下午5:58
@@ -17,9 +19,9 @@ import lombok.experimental.SuperBuilder;
 public class StockTestRequest extends StockQueryRequest {
 
     // 回测开始时间
-    private String startTime;
+    private Date startTime;
     // 回测结束时间
-    private String endTime;
+    private Date endTime;
     // 买入规则
     protected DealRule buyRule;
     // 卖出规则

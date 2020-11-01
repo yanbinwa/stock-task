@@ -53,7 +53,7 @@ public class StockTimeHelper {
      * @param time
      * @return
      */
-    public DateTime buildDateTime(DateTime dateTime, Integer offset, String time) {
+    public DateTime buildDateTime(DateTime dateTime, Integer offset, DateTime time) {
         // 通过offset来获取日期
         int step = 0;
         DateTime ret = new DateTime(dateTime);
@@ -66,14 +66,13 @@ public class StockTimeHelper {
         }
 
         // 需要计算time
-        DateTime retTime = TIME_FORMATTER.parseDateTime(time);
-        ret = ret.withHourOfDay(retTime.getHourOfDay()).withMinuteOfHour(retTime.getMinuteOfHour()).withSecondOfMinute(0)
+        ret = ret.withHourOfDay(time.getHourOfDay()).withMinuteOfHour(time.getMinuteOfHour()).withSecondOfMinute(0)
                 .withMillisOfSecond(0);
         return ret;
     }
 
     public DateTime buildDateTime(DateTime dateTime, DealRule dealRule) {
-        return buildDateTime(dateTime, dealRule.getOffset(), dealRule.getTime());
+        return buildDateTime(dateTime, dealRule.getOffset(), new DateTime(dealRule.getTime()));
     }
 
     public Boolean isOpeningDate(DateTime dateTime) {

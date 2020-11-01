@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @author yanbinwang@emotibot.com
  * @date 2020/9/29 上午10:29
@@ -15,7 +17,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DealRule {
-    private String time;
+    private Date time;
     // 需要计算交易时间，是工作日，去除节假日，可以有一个服务来专门计算（或者爬取一只股票一年的数据，来判断开市的时间）
     private Integer offset;
 }

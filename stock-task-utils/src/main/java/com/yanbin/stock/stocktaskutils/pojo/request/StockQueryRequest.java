@@ -5,8 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 /**
  * @author yanbinwang@emotibot.com
  * @date 2020/10/29 上午8:16
@@ -21,7 +19,5 @@ import java.util.List;
 public class StockQueryRequest {
 
     protected String queryTemplate;
-
-    protected List<String> queryTimes;
 
 }

@@ -76,8 +76,8 @@ public class StockTestServiceImpl implements StockTestService {
      */
     @Override
     public HttpFileStream regressionTest(StockTestRequest stockTestRequest) throws StockTaskException, FileNotFoundException {
-        DateTime startDateTime = dateFormatter.parseDateTime(stockTestRequest.getStartTime());
-        DateTime endDateTime = dateFormatter.parseDateTime(stockTestRequest.getEndTime());
+        DateTime startDateTime = new DateTime(stockTestRequest.getStartTime());
+        DateTime endDateTime = new DateTime(stockTestRequest.getEndTime());
         if (startDateTime == null || endDateTime == null) {
             throw new StockTaskException(StockTaskResponseInfo.STOCK_TASK_JOB_NOT_EXIST);
         }
@@ -240,14 +240,10 @@ public class StockTestServiceImpl implements StockTestService {
             dateTime = new DateTime();
         }
         List<String> queries = new ArrayList<>();
-        for (String time : stockQueryRequest.getQueryTimes()) {
-            // TODO 需要判断time与当前时间，如果time比当前时间小，说明查询的是昨天的数据
-            String query = stockQueryRequest.getQueryTemplate();
-            query = query.replace(StockTaskConstants.DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(dateTime));
-            query = query.replace(StockTaskConstants.TIME_PLACE_HOLDER, time);
-            query = query.replace(StockTaskConstants.LAST_DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(stockTimeHelper.buildLastDealDay(dateTime, 1)));
-            queries.add(query);
-        }
+        String query = stockQueryRequest.getQueryTemplate();
+        query = query.replace(StockTaskConstants.DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(dateTime));
+        query = query.replace(StockTaskConstants.LAST_DATE_PLACE_HOLDER, stockTimeHelper.buildDayStr(stockTimeHelper.buildLastDealDay(dateTime, 1)));
+        queries.add(query);
         return stockDataHelper.fetchStockByWenCai(queries);
     }
 
@@ -274,16 +270,17 @@ public class StockTestServiceImpl implements StockTestService {
     /**
      * 比较给定的time和当前time之间的关系
      *
+     * 需要判断当前时间与股市开盘时间做比较
+     *
      * @param stockQueryRequest
      * @return
      */
     private DateTime getStockQueryDate(StockQueryRequest stockQueryRequest) {
-        DateTime queryDateTime = queryTimeFormatter.parseDateTime(stockQueryRequest.getQueryTimes().get(0));
         DateTime currentDataTime = new DateTime();
-        currentDataTime = currentDataTime.withHourOfDay(queryDateTime.getHourOfDay());
-        currentDataTime = currentDataTime.withMinuteOfHour(queryDateTime.getMinuteOfHour());
-        if (currentDataTime.isBeforeNow()) {
-            currentDataTime.withDayOfYear(currentDataTime.getDayOfYear() - 1);
+        DateTime openTime = currentDataTime.withYear(currentDataTime.getYear()).withDayOfYear(currentDataTime.getDayOfYear())
+                .withHourOfDay(9).withMinuteOfHour(30);
+        if (currentDataTime.isBefore(openTime)) {
+            currentDataTime = currentDataTime.withDayOfYear(currentDataTime.getDayOfYear() - 1);
         }
         return currentDataTime;
     }
