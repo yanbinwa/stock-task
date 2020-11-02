@@ -6,6 +6,7 @@ import com.emotibot.gemini.geminiutils.utils.FileUtils;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
 import com.emotibot.gemini.geminiutils.utils.UuidUtils;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
+import com.yanbin.stock.stocktaskservice.utils.NumUtils;
 import com.yanbin.stock.stocktaskservice.utils.StockDataHelper;
 import com.yanbin.stock.stocktaskservice.utils.StockTimeHelper;
 import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
@@ -111,9 +112,9 @@ public class StockTestServiceImpl implements StockTestService {
             }
             content.addAll(stockTestResults.stream().sorted(Comparator.comparing(StockTestResult::getIncome))
                     .map(t -> Arrays.asList(t.getCode(), t.getName(), t.getBuyTime(), String.valueOf(t.getBuyPrice()), t.getSaleTime(),
-                            String.valueOf(t.getSalePrice()), String.valueOf(t.getIncome())))
+                            String.valueOf(t.getSalePrice()), NumUtils.buildPercentageNum(t.getIncome())))
                     .collect(Collectors.toList()));
-            content.add(Arrays.asList("合计", String.valueOf(stockTestResults.stream().mapToDouble(StockTestResult::getIncome).sum() / stockTestResults.size())));
+            content.add(Arrays.asList("合计", NumUtils.buildPercentageNum(stockTestResults.stream().mapToDouble(StockTestResult::getIncome).sum() / stockTestResults.size())));
             sheetNameToContentMap.put(dateTime.toString(dateFormatter), content);
         }
         String filePath = buildStockTaskTmpFile();
