@@ -81,4 +81,10 @@ public class StockTaskController {
         }
         httpFileHelper.addFileToResponse(httpFileStream, httpServletResponse);
     }
+
+    @CrossOrigin
+    @GetMapping("/wenCai/suggest")
+    public List<String> wenCaiSuggest(@RequestParam String query) {
+        return stockTestService.wenCaiSuggest(query);
+    }
 }

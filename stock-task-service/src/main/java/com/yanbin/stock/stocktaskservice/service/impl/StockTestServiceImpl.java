@@ -50,6 +50,8 @@ public class StockTestServiceImpl implements StockTestService {
     private static final String STOCK_TEST_DIR = "/stockTest";
     private static final Integer DEFAULT_INDUSTRY_ORDER = 10000;
     private static final List<String> STOCK_QUERY_HEADER = Arrays.asList("股票代码", "股票名称", "价格", "涨幅", "行业", "行业排名", "行业涨幅", "行业资金流入");
+    private static final Integer WENCAI_SUGGEST_MAX_INPUT_SIZE = 10;
+
 
     @Autowired
     StockDataHelper stockDataHelper;
@@ -204,6 +206,14 @@ public class StockTestServiceImpl implements StockTestService {
         file.delete();
         return HttpFileStream.builder().inputStream(inputStream).httpFileElement(HttpFileElement.builder()
                 .name(file.getName()).build()).build();
+    }
+
+    @Override
+    public List<String> wenCaiSuggest(String query) {
+        if (StringUtils.isEmpty(query) || query.length() > WENCAI_SUGGEST_MAX_INPUT_SIZE) {
+            return null;
+        }
+        return stockDataHelper.wenCaiSuggest(query);
     }
 
 

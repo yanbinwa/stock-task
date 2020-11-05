@@ -53,6 +53,7 @@ public class StockDataHelper {
     private static final String WEN_CAI_URL = "http://www.iwencai.com/unifiedwap/unified-wap/v2/result/get-robot-data?source=Ths_iwencai_Xuangu&version=2.0";
     private static final String WEN_CAI_ADD_INFO = "{\"urp\":{\"scene\":1,\"company\":1,\"business\":8},\"contentType\":\"json\"}";
     private static final String SPIDER_INDUSTRY_TOP_URL = "/gemini/spider/data/industry/top";
+    private static final String WEN_CAI_SUGGEST_URL = "http://www.iwencai.com/unifiedwap/suggest/V1/index/query-hint-list";
 
     // 问财股票信息KEY
     private static final String WEN_CAI_STOCK_CODE_KEY = "code";
@@ -200,6 +201,34 @@ public class StockDataHelper {
         }
         return stockToIndustryEntities.stream().collect(Collectors.groupingBy(StockToIndustryEntity::getStockCode,
                 Collectors.mapping(StockToIndustryEntity::getIndustryName, Collectors.toList())));
+    }
+
+    public List<String> wenCaiSuggest(String query) {
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("dataType", "lenovo");
+        paramMap.put("num", 5);
+        paramMap.put("q", query);
+        paramMap.put("queryType", "info");
+
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+
+        JSONObject jsonObject = httpHelper.get(WEN_CAI_SUGGEST_URL, headerMap, paramMap, JSONObject.class);
+        Boolean ret = jsonObject.getBoolean("success");
+        if (!ret) {
+            log.error("wen cai suggest failed");
+            return null;
+        }
+        try {
+            List<String> result = new ArrayList<>();
+            JSONArray dataObj = jsonObject.getJSONObject("data").getJSONArray("docs");
+            IntStream.range(0, dataObj.size()).forEach(t -> result.add(dataObj.getString(t)));
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("wen cai suggest data invalid");
+            return null;
+        }
     }
 
 }
