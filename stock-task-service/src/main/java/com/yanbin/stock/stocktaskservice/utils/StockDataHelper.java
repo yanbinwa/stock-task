@@ -6,6 +6,7 @@ import com.emotibot.gemini.geminiutils.pojo.response.ArrayResponse;
 import com.emotibot.gemini.geminiutils.utils.HttpHelper;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
 import com.emotibot.gemini.geminiutils.utils.MinioHelper;
+import com.emotibot.gemini.geminiutils.utils.RedisHelper;
 import com.yanbin.stock.stocktaskservice.dao.data.StockDao;
 import com.yanbin.stock.stocktaskservice.dao.data.StockToIndustryDao;
 import com.yanbin.stock.stocktaskservice.dao.data.StockTsDao;
@@ -15,6 +16,7 @@ import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
 import com.yanbin.stock.stocktaskutils.pojo.data.Industry;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.data.StockTs;
+import com.yanbin.stock.stocktaskutils.pojo.request.WeiCaiTokenRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
@@ -24,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,6 +87,9 @@ public class StockDataHelper {
     @Autowired
     MinioHelper minioHelper;
 
+    @Autowired
+    RedisHelper redisHelper;
+
     /**
      * 目前问财接口只需要返回code就可以了
      *
@@ -91,6 +97,11 @@ public class StockDataHelper {
      * @return
      */
     public List<Stock> fetchStockByWenCai(String query) {
+        String token = getWenCaiToken();
+        if (StringUtils.isEmpty(token)) {
+            log.error("wen cai token is empty");
+            return null;
+        }
 
         Map<String, Object> formMap = new HashMap<>();
         formMap.put("question", query);
@@ -99,6 +110,7 @@ public class StockDataHelper {
 
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+        headerMap.put("hexin-v", token);
 
         JSONObject jsonObject = httpHelper.postForm(WEN_CAI_URL, headerMap, null, formMap, JSONObject.class);
         Integer code = jsonObject.getInteger("status_code");
@@ -204,6 +216,7 @@ public class StockDataHelper {
     }
 
     public List<String> wenCaiSuggest(String query) {
+
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("dataType", "lenovo");
         paramMap.put("num", 5);
@@ -231,4 +244,18 @@ public class StockDataHelper {
         }
     }
 
+    public void addWenCaiToken(WeiCaiTokenRequest weiCaiTokenRequest) {
+        if (StringUtils.isEmpty(weiCaiTokenRequest.getToken())) {
+            return;
+        }
+        redisHelper.set(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY, weiCaiTokenRequest.getToken());
+    }
+
+    public String getWenCaiToken() {
+        return (String) redisHelper.get(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY);
+    }
+
+    public void deleteWenCaiToken() {
+        redisHelper.remove(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY);
+    }
 }

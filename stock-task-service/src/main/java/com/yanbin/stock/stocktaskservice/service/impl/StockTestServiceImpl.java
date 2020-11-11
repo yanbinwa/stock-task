@@ -4,7 +4,11 @@ import com.emotibot.gemini.geminiutils.pojo.http.HttpFileElement;
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.emotibot.gemini.geminiutils.utils.FileUtils;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
+import com.emotibot.gemini.geminiutils.utils.RedisHelper;
 import com.emotibot.gemini.geminiutils.utils.UuidUtils;
+import com.yanbin.stock.stocktaskservice.dao.config.UserConfigDao;
+import com.yanbin.stock.stocktaskservice.entity.config.UserConfigEntity;
+import com.yanbin.stock.stocktaskservice.mapper.StockTaskMapper;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
 import com.yanbin.stock.stocktaskservice.utils.NumUtils;
 import com.yanbin.stock.stocktaskservice.utils.StockDataHelper;
@@ -12,13 +16,11 @@ import com.yanbin.stock.stocktaskservice.utils.StockTimeHelper;
 import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
 import com.yanbin.stock.stocktaskutils.constants.StockTaskResponseInfo;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
+import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import com.yanbin.stock.stocktaskutils.pojo.data.Industry;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.data.StockIndustry;
-import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
-import com.yanbin.stock.stocktaskutils.pojo.request.StockQueryRequest;
-import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
-import com.yanbin.stock.stocktaskutils.pojo.request.StockTestResult;
+import com.yanbin.stock.stocktaskutils.pojo.request.*;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -58,6 +60,15 @@ public class StockTestServiceImpl implements StockTestService {
 
     @Autowired
     StockTimeHelper stockTimeHelper;
+
+    @Autowired
+    RedisHelper redisHelper;
+
+    @Autowired
+    UserConfigDao userConfigDao;
+
+    @Autowired
+    StockTaskMapper stockTaskMapper;
 
 
     @PostConstruct
@@ -216,6 +227,36 @@ public class StockTestServiceImpl implements StockTestService {
         return stockDataHelper.wenCaiSuggest(query);
     }
 
+    @Override
+    public void addWenCaiToken(WeiCaiTokenRequest weiCaiTokenRequest) {
+        stockDataHelper.addWenCaiToken(weiCaiTokenRequest);
+    }
+
+    /**
+     * 判读用户配置是否存在，如果存在，在原有基础上修改，如果不存在，直接新增
+     *
+     * @param userId
+     * @param userConfig
+     */
+    @Override
+    public void updateUserConfig(Long userId, UserConfig userConfig) {
+        UserConfigEntity userConfigEntity = userConfigDao.findOneByUserId(userId);
+        if (userConfigEntity == null) {
+            userConfigEntity = UserConfigEntity.builder().userId(userId).build();
+        }
+        UserConfigEntity newUserConfigEntity = stockTaskMapper.userConfigToUserConfigEntity(userConfig);
+        userConfigEntity.update(newUserConfigEntity);
+        userConfigDao.save(userConfigEntity);
+    }
+
+    @Override
+    public UserConfig getUserConfig(Long userId) {
+        UserConfigEntity userConfigEntity = userConfigDao.findOneByUserId(userId);
+        if (userConfigEntity == null) {
+            return null;
+        }
+        return stockTaskMapper.userConfigEntityToUserConfig(userConfigEntity);
+    }
 
     /**
      * 1. 获取stock列表

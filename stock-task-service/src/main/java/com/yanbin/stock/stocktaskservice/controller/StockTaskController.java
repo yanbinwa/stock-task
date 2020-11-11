@@ -6,10 +6,12 @@ import com.yanbin.stock.stocktaskservice.service.StockJobManagerService;
 import com.yanbin.stock.stocktaskservice.service.StockTestService;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
 import com.yanbin.stock.stocktaskutils.pojo.StockJob;
+import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockWenCaiRequest;
+import com.yanbin.stock.stocktaskutils.pojo.request.WeiCaiTokenRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,6 +68,18 @@ public class StockTaskController {
         httpFileHelper.addFileToResponse(httpFileStream, httpServletResponse);
     }
 
+    @CrossOrigin
+    @PostMapping("/config")
+    public void updateUserConfig(@RequestHeader("userId") Long userId, @RequestBody UserConfig userConfig) {
+        stockTestService.updateUserConfig(userId, userConfig);
+    }
+
+    @CrossOrigin
+    @GetMapping("/config")
+    public UserConfig getUserConfig(@RequestHeader("userId") Long userId) {
+        return stockTestService.getUserConfig(userId);
+    }
+
     @PostMapping("/wenCai")
     public List<Stock> wenCai(@RequestBody StockWenCaiRequest request) {
         return stockTestService.wenCaiTest(request.getQuery());
@@ -87,4 +101,11 @@ public class StockTaskController {
     public List<String> wenCaiSuggest(@RequestParam String query) {
         return stockTestService.wenCaiSuggest(query);
     }
+
+    @CrossOrigin
+    @PostMapping("/wenCai/token")
+    public void addWenCaiToken(@RequestBody WeiCaiTokenRequest weiCaiTokenRequest) {
+        stockTestService.addWenCaiToken(weiCaiTokenRequest);
+    }
+
 }

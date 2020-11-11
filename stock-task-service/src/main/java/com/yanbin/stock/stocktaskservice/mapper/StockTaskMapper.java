@@ -2,8 +2,10 @@ package com.yanbin.stock.stocktaskservice.mapper;
 
 import com.yanbin.stock.stocktaskservice.entity.StockActionExecuteMsgEntity;
 import com.yanbin.stock.stocktaskservice.entity.StockJobEntity;
+import com.yanbin.stock.stocktaskservice.entity.config.UserConfigEntity;
 import com.yanbin.stock.stocktaskutils.pojo.StockActionExecuteMsg;
 import com.yanbin.stock.stocktaskutils.pojo.StockJob;
+import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 
@@ -19,4 +21,7 @@ public interface StockTaskMapper {
 
     StockActionExecuteMsgEntity stockActionExecuteMsgToStockActionExecuteMsgEntity(StockActionExecuteMsg stockActionExecuteMsg);
     StockActionExecuteMsg stockActionExecuteMsgEntityToStockActionExecuteMsg(StockActionExecuteMsgEntity stockActionExecuteMsgEntity);
+
+    UserConfigEntity userConfigToUserConfigEntity(UserConfig userConfig);
+    UserConfig userConfigEntityToUserConfig(UserConfigEntity userConfigEntity);
 }

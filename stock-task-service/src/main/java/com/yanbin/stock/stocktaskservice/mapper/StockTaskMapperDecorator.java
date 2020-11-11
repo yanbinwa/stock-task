@@ -4,9 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.emotibot.gemini.geminiutils.utils.JsonUtils;
 import com.yanbin.stock.stocktaskservice.entity.StockActionExecuteMsgEntity;
 import com.yanbin.stock.stocktaskservice.entity.StockJobEntity;
+import com.yanbin.stock.stocktaskservice.entity.config.UserConfigEntity;
 import com.yanbin.stock.stocktaskutils.pojo.StockActionContext;
 import com.yanbin.stock.stocktaskutils.pojo.StockActionExecuteMsg;
 import com.yanbin.stock.stocktaskutils.pojo.StockJob;
+import com.yanbin.stock.stocktaskutils.pojo.config.QueryConfig;
+import com.yanbin.stock.stocktaskutils.pojo.config.RegressionConfig;
+import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
@@ -61,5 +65,29 @@ public abstract class StockTaskMapperDecorator implements StockTaskMapper {
             stockActionExecuteMsg.setContext(JsonUtils.getObjectFromStr(stockActionExecuteMsgEntity.getActionContextStr(), StockActionContext.class));
         }
         return stockActionExecuteMsg;
+    }
+
+    @Override
+    public UserConfigEntity userConfigToUserConfigEntity(UserConfig userConfig) {
+        UserConfigEntity userConfigEntity = stockTaskMapper.userConfigToUserConfigEntity(userConfig);
+        if (userConfig.getRegressionConfig() != null) {
+            userConfigEntity.setRegressionConfigStr(JsonUtils.getStrFromObject(userConfig.getRegressionConfig()));
+        }
+        if (userConfig.getQueryConfig() != null) {
+            userConfigEntity.setQueryConfigStr(JsonUtils.getStrFromObject(userConfig.getQueryConfig()));
+        }
+        return userConfigEntity;
+    }
+
+    @Override
+    public UserConfig userConfigEntityToUserConfig(UserConfigEntity userConfigEntity) {
+        UserConfig userConfig = stockTaskMapper.userConfigEntityToUserConfig(userConfigEntity);
+        if (!StringUtils.isEmpty(userConfigEntity.getRegressionConfigStr())) {
+            userConfig.setRegressionConfig(JsonUtils.getObjectFromStr(userConfigEntity.getRegressionConfigStr(), RegressionConfig.class));
+        }
+        if (!StringUtils.isEmpty(userConfigEntity.getQueryConfigStr())) {
+            userConfig.setQueryConfig(JsonUtils.getObjectFromStr(userConfigEntity.getQueryConfigStr(), QueryConfig.class));
+        }
+        return userConfig;
     }
 }

@@ -2,10 +2,11 @@ package com.yanbin.stock.stocktaskservice.service;
 
 import com.emotibot.gemini.geminiutils.pojo.http.HttpFileStream;
 import com.yanbin.stock.stocktaskutils.exception.StockTaskException;
+import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
-import org.springframework.web.bind.annotation.RequestParam;
+import com.yanbin.stock.stocktaskutils.pojo.request.WeiCaiTokenRequest;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -21,4 +22,7 @@ public interface StockTestService {
     List<Stock> wenCaiTest(String query);
     HttpFileStream stockIndustryQuery(StockIndustryRequest stockIndustryRequest) throws FileNotFoundException;
     List<String> wenCaiSuggest(String query);
+    void addWenCaiToken(WeiCaiTokenRequest weiCaiTokenRequest);
+    void updateUserConfig(Long userId, UserConfig userConfig);
+    UserConfig getUserConfig(Long userId);
 }

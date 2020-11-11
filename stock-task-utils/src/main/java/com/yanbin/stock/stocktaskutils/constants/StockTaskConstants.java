@@ -19,4 +19,6 @@ public class StockTaskConstants {
     public static final String TIME_PLACE_HOLDER = "${time}";
 
     public static final String LAST_DATE_PLACE_HOLDER = "${lastDate}";
+
+    public static final String REDIS_WENCAI_TOKEN_KEY = "wen.cai.token";
 }
