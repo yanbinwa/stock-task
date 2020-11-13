@@ -1,4 +1,4 @@
-FROM docker-reg.emotibot.com.cn:55688/base/java8:20160809
+FROM harbor.emotibot.com/image-base/alpine-jdk:v1.8
 
 # Set TimeZone
 ENV TZ=Asia/Shanghai

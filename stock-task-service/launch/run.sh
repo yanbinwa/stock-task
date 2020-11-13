@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 SERVICE_NAME=stock-task-service
 BUNDLE_VER=0.0.1-SNAPSHOT
