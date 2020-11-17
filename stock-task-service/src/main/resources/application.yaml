@@ -10,4 +10,4 @@ executor:
   debug: ${EXECUTOR_DEBUG:true}
 
 spider:
-  url: ${SPIDER_URL:http://localhost:1618}
+  url: ${SPIDER_URL:http://192.168.1.10:1618}

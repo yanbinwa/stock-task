@@ -20,7 +20,10 @@ import com.yanbin.stock.stocktaskutils.pojo.config.UserConfig;
 import com.yanbin.stock.stocktaskutils.pojo.data.Industry;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.data.StockIndustry;
-import com.yanbin.stock.stocktaskutils.pojo.request.*;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockQueryRequest;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
+import com.yanbin.stock.stocktaskutils.pojo.request.StockTestResult;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -95,9 +98,9 @@ public class StockTestServiceImpl implements StockTestService {
         if (startDateTime == null || endDateTime == null) {
             throw new StockTaskException(StockTaskResponseInfo.STOCK_TASK_JOB_NOT_EXIST);
         }
+        // 更新wenCai token
         Map<DateTime, List<StockTestResult>> stockTestRequestMap = new HashMap<>();
         List<DateTime> dateTimes = new ArrayList<>();
-        // 获取
         for (int i = 0; i <= endDateTime.getDayOfYear() - startDateTime.getDayOfYear(); i ++) {
             DateTime dateTime = startDateTime.plusDays(i);
             if (!stockTimeHelper.isOpeningDate(dateTime)) {
@@ -225,11 +228,6 @@ public class StockTestServiceImpl implements StockTestService {
             return null;
         }
         return stockDataHelper.wenCaiSuggest(query);
-    }
-
-    @Override
-    public void addWenCaiToken(WeiCaiTokenRequest weiCaiTokenRequest) {
-        stockDataHelper.addWenCaiToken(weiCaiTokenRequest);
     }
 
     /**

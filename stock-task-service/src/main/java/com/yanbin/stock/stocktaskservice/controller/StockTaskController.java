@@ -11,7 +11,6 @@ import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockIndustryRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockTestRequest;
 import com.yanbin.stock.stocktaskutils.pojo.request.StockWenCaiRequest;
-import com.yanbin.stock.stocktaskutils.pojo.request.WeiCaiTokenRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -100,12 +99,6 @@ public class StockTaskController {
     @GetMapping("/wenCai/suggest")
     public List<String> wenCaiSuggest(@RequestParam String query) {
         return stockTestService.wenCaiSuggest(query);
-    }
-
-    @CrossOrigin
-    @PostMapping("/wenCai/token")
-    public void addWenCaiToken(@RequestBody WeiCaiTokenRequest weiCaiTokenRequest) {
-        stockTestService.addWenCaiToken(weiCaiTokenRequest);
     }
 
 }

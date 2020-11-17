@@ -16,7 +16,6 @@ import com.yanbin.stock.stocktaskutils.constants.StockTaskConstants;
 import com.yanbin.stock.stocktaskutils.pojo.data.Industry;
 import com.yanbin.stock.stocktaskutils.pojo.data.Stock;
 import com.yanbin.stock.stocktaskutils.pojo.data.StockTs;
-import com.yanbin.stock.stocktaskutils.pojo.request.WeiCaiTokenRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,17 +51,10 @@ import java.util.stream.IntStream;
 public class StockDataHelper {
 
     // 问财
-    private static final String WEN_CAI_URL = "http://www.iwencai.com/unifiedwap/unified-wap/v2/result/get-robot-data?source=Ths_iwencai_Xuangu&version=2.0";
-    private static final String WEN_CAI_ADD_INFO = "{\"urp\":{\"scene\":1,\"company\":1,\"business\":8},\"contentType\":\"json\"}";
-    private static final String SPIDER_INDUSTRY_TOP_URL = "/gemini/spider/data/industry/top";
-    private static final String WEN_CAI_SUGGEST_URL = "http://www.iwencai.com/unifiedwap/suggest/V1/index/query-hint-list";
+    private static final String SPIDER_INDUSTRY_TOP_URL = "/gemini/spider/data/stock/industry/top";
+    private static final String SPIDER_WEN_CAI_URL = "/gemini/spider/data/stock/wenCai";
 
-    // 问财股票信息KEY
-    private static final String WEN_CAI_STOCK_CODE_KEY = "code";
-    private static final String WEN_CAI_STOCK_NAME_KEY = "股票简称";
-    // 及时信息
-    private static final String WEN_CAI_STOCK_CURRENT_PRICE_KEY = "最新价";
-    private static final String WEN_CAI_STOCK_CURRENT_GROUP_RATE_KEY = "最新涨跌幅";
+    private static final String WEN_CAI_SUGGEST_URL = "http://www.iwencai.com/unifiedwap/suggest/V1/index/query-hint-list";
 
     private static final DateTimeFormatter STOCK_TIME_FORMATTER = DateTimeFormat.forPattern("HH:mm:ss");
 
@@ -91,49 +82,17 @@ public class StockDataHelper {
     RedisHelper redisHelper;
 
     /**
-     * 目前问财接口只需要返回code就可以了
+     * 通过爬虫接口获取
      *
      * @param query
      * @return
      */
     public List<Stock> fetchStockByWenCai(String query) {
-        String token = getWenCaiToken();
-        if (StringUtils.isEmpty(token)) {
-            log.error("wen cai token is empty");
+        ArrayResponse response = httpHelper.post(spiderUrl + SPIDER_WEN_CAI_URL, null, null, query, ArrayResponse.class);
+        if (response == null || !response.success()) {
             return null;
         }
-
-        Map<String, Object> formMap = new HashMap<>();
-        formMap.put("question", query);
-        formMap.put("page", 1);
-        formMap.put("perpage", 20);
-
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
-        headerMap.put("hexin-v", token);
-
-        JSONObject jsonObject = httpHelper.postForm(WEN_CAI_URL, headerMap, null, formMap, JSONObject.class);
-        Integer code = jsonObject.getInteger("status_code");
-        if (code != 0) {
-            log.error("wen cai");
-            return null;
-        }
-        try {
-            List<Stock> stocks = new ArrayList<>();
-            JSONArray dataObj = jsonObject.getJSONObject("data").getJSONArray("answer").getJSONObject(0)
-                    .getJSONArray("txt").getJSONObject(0).getJSONObject("content").getJSONArray("components")
-                    .getJSONObject(0).getJSONObject("data").getJSONArray("datas");
-            IntStream.range(0, dataObj.size()).forEach(t ->
-                    stocks.add(Stock.builder().code(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_CODE_KEY))
-                            .name(dataObj.getJSONObject(t).getString(WEN_CAI_STOCK_NAME_KEY))
-                            .price(dataObj.getJSONObject(t).getDouble(WEN_CAI_STOCK_CURRENT_PRICE_KEY))
-                            .growthRate(dataObj.getJSONObject(t).getDouble(WEN_CAI_STOCK_CURRENT_GROUP_RATE_KEY)).build()));
-            return stocks;
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("wen cai data");
-            return null;
-        }
+        return httpHelper.buildResponseDataList(response, Stock.class);
     }
 
     public List<Stock> fetchStockByWenCai(List<String> queries) {
@@ -242,20 +201,5 @@ public class StockDataHelper {
             log.error("wen cai suggest data invalid");
             return null;
         }
-    }
-
-    public void addWenCaiToken(WeiCaiTokenRequest weiCaiTokenRequest) {
-        if (StringUtils.isEmpty(weiCaiTokenRequest.getToken())) {
-            return;
-        }
-        redisHelper.set(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY, weiCaiTokenRequest.getToken());
-    }
-
-    public String getWenCaiToken() {
-        return (String) redisHelper.get(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY);
-    }
-
-    public void deleteWenCaiToken() {
-        redisHelper.remove(StockTaskConstants.REDIS_WENCAI_TOKEN_KEY);
     }
 }
